@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>实物行情</title>
+  <style>
+    :root {
+      --bg: #08080f;
+      --nav-bg: #1a1a24;
+      --gold: #ffd733;
+      --red: #ff3c3c;
+      --green: #39e059;
+      --white: #ffffff;
+      --gray: #999999;
+      --ts-red: #ff2222;
+      --divider: #222230;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--white);
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* 手机端容器 */
+    .phone {
+      width: 100%;
+      max-width: 420px;
+      min-height: 100vh;
+      background: var(--bg);
+      position: relative;
+      padding-bottom: 64px;
+    }
+
+    /* ====== 头部 ====== */
+    .logo-area {
+      padding: 12px 16px 0;
+    }
+    .logo-text {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.3;
+    }
+    .logo-zh {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 1.5px;
+    }
+    .logo-en {
+      font-size: 10px;
+      font-weight: 400;
+      color: #666;
+      letter-spacing: 1.5px;
+    }
+    .title {
+      padding: 20px 16px 24px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 3px;
+    }
+
+    /* ====== 时间戳 ====== */
+    .timestamp {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 16px 20px;
+      font-size: 11px;
+      color: var(--ts-red);
+      font-weight: 400;
+    }
+
+    /* ====== 表格容器 ====== */
+    .table-wrap {
+      margin: 0 12px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    /* ====== 表头 ====== */
+    .thead {
+      display: flex;
+      background: var(--nav-bg);
+      padding: 14px 0;
+    }
+    .th {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--white);
+      text-align: center;
+    }
+    .th-name  { flex: 0 0 32%; }
+    .th-buy   { flex: 0 0 22%; }
+    .th-high  { flex: 0 0 23%; }
+    .th-low   { flex: 0 0 23%; }
+
+    /* ====== 数据行 ====== */
+    .tbody {}
+    .tr {
+      display: flex;
+      align-items: center;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--divider);
+      transition: background 0.3s;
+    }
+    .tr:last-child { border-bottom: none; }
+
+    .td {
+      text-align: center;
+    }
+    .td-name  { flex: 0 0 32%; }
+    .td-buy   { flex: 0 0 22%; }
+    .td-high  { flex: 0 0 23%; }
+    .td-low   { flex: 0 0 23%; }
+
+    /* 品种名称 */
+    .td-name span {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* 回购价 */
+    .td-buy span {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* 最高价 */
+    .td-high span {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    /* 最低价 */
+    .td-low span {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    /* 价格闪烁 */
+    .flash-up   { animation: flashUp .5s ease-out; }
+    .flash-down { animation: flashDown .5s ease-out; }
+    @keyframes flashUp   { 0% { background: rgba(255,60,60,0.10); } 100% { background: transparent; } }
+    @keyframes flashDown { 0% { background: rgba(57,224,89,0.10); } 100% { background: transparent; } }
+
+    .price-pop { animation: pricePop .35s ease-out; }
+    @keyframes pricePop { 0% { transform: scale(1.08); } 100% { transform: scale(1); } }
+
+    /* ====== 免责声明 ====== */
+    .disclaimer {
+      text-align: center;
+      padding: 30px 20px 20px;
+      font-size: 11px;
+      color: #777;
+      line-height: 1.8;
+    }
+    .disclaimer .l2 {
+      color: #555;
+      font-size: 10px;
+      line-height: 1.7;
+      padding: 0 8px;
+    }
+
+    /* ====== 底部导航栏 ====== */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      background: var(--nav-bg);
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      border-top: 1px solid var(--divider);
+    }
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      color: #666;
+    }
+    .nav-item.active { color: var(--gold); }
+    .nav-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+    .nav-item.active .nav-icon {
+      color: var(--gold);
+    }
+
+    /* ====== Loading ====== */
+    .loading-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 100px 20px;
+      gap: 12px;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 2px solid #222;
+      border-top-color: var(--gold);
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--gray); }
+  </style>
+</head>
+<body>
+
+<div class="phone">
+
+  <!-- 头部 -->
+  <div class="logo-area">
+    <div class="logo-text">
+      <span class="logo-zh">中国黄金</span>
+      <span class="logo-en">CHINA GOLD</span>
+    </div>
+  </div>
+  <div class="title">福久源中国黄金</div>
+
+  <!-- 时间戳 -->
+  <div class="timestamp" id="timestampBar">
+    <span id="tsText">--.--</span>
+    <span>|</span>
+    <span id="tsStatus">闭盘</span>
+  </div>
+
+  <!-- 表格 -->
+  <div class="table-wrap" id="tableWrap">
+    <!-- 表头 -->
+    <div class="thead">
+      <div class="th th-name">品类</div>
+      <div class="th th-buy">回购</div>
+      <div class="th th-high">高</div>
+      <div class="th th-low">低</div>
+    </div>
+    <!-- 表体 -->
+    <div class="tbody" id="tbody">
+      <div class="loading-wrap" id="loading">
+        <div class="spinner"></div>
+        <span class="loading-text">加载中...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 免责声明 -->
+  <div class="disclaimer">
+    <div style="color: #ff2222;">声明：以上报价仅供参考！</div>
+    <div class="l2">相关价格仅适用于我司自身贵金属实物销售及回收业务，其他主体参考该价格开展非法黄金活动的，与我司无关，我司概不负责。我司一旦发现有关违法违规线索，将向有关机关(包括公安部门)报告。一切解释权归开发商户所有，以门店实际为准。</div>
+  </div>
+
+</div>
+
+<!-- 底部导航栏 -->
+<div class="bottom-nav">
+  <div class="nav-item">
+    <span class="nav-icon">🏠</span>
+    <span>首页</span>
+  </div>
+  <div class="nav-item active">
+    <span class="nav-icon">📈</span>
+    <span>行情</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">📊</span>
+    <span>基差</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">⭐</span>
+    <span>自选</span>
+  </div>
+  <div class="nav-item">
+    <span class="nav-icon">⚡</span>
+    <span>快讯</span>
+  </div>
+</div>
+
+<script>
+// ==================== 产品定义 ====================
+const PRODUCTS = [
+  { code: "XAU", name: "黄金" },
+  { code: "XAG", name: "白银" },
+  { code: "XPT", name: "铂金" },
+  { code: "XPD", name: "钯金" },
+];
+
+// ==================== 状态 ====================
+const quotes = {};
+const prevPrice = {};
+let firstLoad = true;
+
+// ==================== 数据获取（HTTP 轮询，3秒/次） ====================
+async function fetchQuotes() {
+  try {
+    const resp = await fetch("/api/quote");
+    const data = await resp.json();
+    if (!data || data.error) return;
+
+    document.getElementById("loading")?.remove();
+
+    if (firstLoad) {
+      for (const [code, d] of Object.entries(data)) {
+        if (code === "USDCNY") continue;
+        quotes[code] = { name: d.name, bid: d.bid, high: d.high, low: d.low };
+      }
+      renderAll();
+      firstLoad = false;
+    } else {
+      for (const [code, d] of Object.entries(data)) {
+        updateQuote(code, d);
+      }
+    }
+
+    updateTimestamp();
+  } catch (err) {
+    console.error("获取行情失败:", err);
+  }
+}
+
+function updateTimestamp() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  const h = String(now.getHours()).padStart(2, "0");
+  const min = String(now.getMinutes()).padStart(2, "0");
+  const s = String(now.getSeconds()).padStart(2, "0");
+  document.getElementById("tsText").textContent = `${y}-${m}-${d} ${h}:${min}:${s}`;
+
+  // 交易时段判断：8:30-21:30 为实时，其余闭盘
+  const hour = now.getHours();
+  const minute = now.getMinutes();
+  const inMarket = (hour > 8 || (hour === 8 && minute >= 30)) && (hour < 21 || (hour === 21 && minute <= 30));
+  const st = document.getElementById("tsStatus");
+  if (st) {
+    st.textContent = inMarket ? "实时" : "闭盘";
+    st.style.color = inMarket ? "#39e059" : "#ff2222";
+  }
+}
+
+// ==================== 数据处理 ====================
+function updateQuote(code, data) {
+  if (!code || !data || code === "USDCNY") return;
+  const old = quotes[code] ? quotes[code].bid : null;
+  quotes[code] = {
+    name: data.name,
+    bid: data.bid,
+    high: data.high,
+    low: data.low,
+  };
+  prevPrice[code] = old;
+  updateRow(code);
+}
+
+function updateRow(code) {
+  const q = quotes[code];
+  if (!q) return;
+
+  const prev = prevPrice[code];
+
+  // 回购
+  const bidEl = document.getElementById("bid-" + code);
+  if (bidEl && q.bid != null) {
+    bidEl.textContent = q.bid.toFixed(2);
+    if (prev != null && q.bid !== prev) {
+      bidEl.classList.remove("price-pop");
+      void bidEl.offsetWidth;
+      bidEl.classList.add("price-pop");
+    }
+  }
+
+  // 最高
+  const highEl = document.getElementById("high-" + code);
+  if (highEl && q.high != null) highEl.textContent = q.high.toFixed(2);
+
+  // 最低
+  const lowEl = document.getElementById("low-" + code);
+  if (lowEl && q.low != null) lowEl.textContent = q.low.toFixed(2);
+
+  // 行闪烁
+  const row = document.getElementById("row-" + code);
+  if (row && prev != null && q.bid !== prev) {
+    row.classList.add(q.bid > prev ? "flash-up" : "flash-down");
+    setTimeout(() => row.classList.remove("flash-up", "flash-down"), 500);
+  }
+
+  updateTimestamp();
+}
+
+// ==================== 渲染 ====================
+function renderAll() {
+  const tbody = document.getElementById("tbody");
+  let html = "";
+
+  for (const p of PRODUCTS) {
+    const q = quotes[p.code] || {};
+    html += `
+    <div class="tr" id="row-${p.code}">
+      <div class="td td-name"><span>${p.name}</span></div>
+      <div class="td td-buy"><span id="bid-${p.code}">${q.bid != null ? q.bid.toFixed(2) : "--.--"}</span></div>
+      <div class="td td-high"><span id="high-${p.code}">${q.high != null ? q.high.toFixed(2) : "--.--"}</span></div>
+      <div class="td td-low"><span id="low-${p.code}">${q.low != null ? q.low.toFixed(2) : "--.--"}</span></div>
+    </div>`;
+  }
+
+  tbody.innerHTML = html;
+}
+
+// ==================== 启动 ====================
+renderAll();
+fetchQuotes();
+setInterval(fetchQuotes, 3000);
+</script>
+</body>
+</html>

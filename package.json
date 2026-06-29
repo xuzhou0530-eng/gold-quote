@@ -1,0 +1,19 @@
+{
+  "name": "gold-quote",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "egoroof-blowfish": "^4.0.2",
+    "express": "^4.21.0",
+    "protobufjs": "^8.6.5",
+    "ws": "^8.21.0"
+  }
+}
