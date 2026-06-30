@@ -41,7 +41,7 @@
 
     /* ====== 头部 ====== */
     .logo-area {
-      padding: 16px 20px 0;
+      padding: clamp(12px, 3.8vw, 16px) clamp(14px, 4.8vw, 20px) 0;
     }
     .logo-text {
       display: flex;
@@ -49,24 +49,24 @@
       line-height: 1.3;
     }
     .logo-zh {
-      font-size: 22px;
+      font-size: clamp(16px, 5.24vw, 22px);
       font-weight: 700;
       color: var(--gold);
-      letter-spacing: 2px;
+      letter-spacing: clamp(1px, 0.48vw, 2px);
     }
     .logo-en {
-      font-size: 13px;
+      font-size: clamp(11px, 3.1vw, 13px);
       font-weight: 400;
       color: #666;
       letter-spacing: 2px;
     }
     .title {
-      padding: 26px 16px 32px;
+      padding: clamp(20px, 6.2vw, 26px) clamp(12px, 3.8vw, 16px) clamp(24px, 7.6vw, 32px);
       text-align: center;
-      font-size: 30px;
+      font-size: clamp(22px, 7.14vw, 30px);
       font-weight: 700;
       color: var(--white);
-      letter-spacing: 4px;
+      letter-spacing: clamp(2px, 0.95vw, 4px);
     }
 
     /* ====== 时间戳 ====== */
@@ -75,8 +75,8 @@
       justify-content: flex-end;
       align-items: center;
       gap: 8px;
-      padding: 16px 16px 26px;
-      font-size: 14px;
+      padding: clamp(12px, 3.8vw, 16px) clamp(12px, 3.8vw, 16px) clamp(18px, 6.2vw, 26px);
+      font-size: clamp(12px, 3.33vw, 14px);
       color: var(--ts-red);
       font-weight: 400;
     }
@@ -92,10 +92,10 @@
     .thead {
       display: flex;
       background: var(--nav-bg);
-      padding: 18px 0;
+      padding: clamp(12px, 4.3vw, 18px) 0;
     }
     .th {
-      font-size: 20px;
+      font-size: clamp(16px, 4.76vw, 20px);
       font-weight: 700;
       color: var(--white);
       text-align: center;
@@ -110,7 +110,7 @@
     .tr {
       display: flex;
       align-items: center;
-      padding: 24px 0;
+      padding: clamp(16px, 5.7vw, 24px) 0;
       border-bottom: 1px solid var(--divider);
       transition: background 0.3s;
     }
@@ -118,6 +118,7 @@
 
     .td {
       text-align: center;
+      white-space: nowrap;
     }
     .td-name  { flex: 0 0 28%; }
     .td-buy   { flex: 0 0 24.5%; }
@@ -126,28 +127,28 @@
 
     /* 品种名称 */
     .td-name span {
-      font-size: 22px;
+      font-size: clamp(16px, 5.24vw, 22px);
       font-weight: 700;
       color: var(--gold);
     }
 
     /* 回购价 */
     .td-buy span {
-      font-size: 22px;
+      font-size: clamp(16px, 5.24vw, 22px);
       font-weight: 700;
       color: var(--green);
     }
 
     /* 最高价 */
     .td-high span {
-      font-size: 22px;
+      font-size: clamp(16px, 5.24vw, 22px);
       font-weight: 700;
       color: var(--red);
     }
 
     /* 最低价 */
     .td-low span {
-      font-size: 22px;
+      font-size: clamp(16px, 5.24vw, 22px);
       font-weight: 700;
       color: var(--green);
     }
@@ -164,14 +165,14 @@
     /* ====== 免责声明 ====== */
     .disclaimer {
       text-align: center;
-      padding: 40px 24px 24px;
-      font-size: 13px;
+      padding: clamp(24px, 9.5vw, 40px) clamp(16px, 5.7vw, 24px) clamp(16px, 5.7vw, 24px);
+      font-size: clamp(11px, 3.1vw, 13px);
       color: #777;
       line-height: 1.8;
     }
     .disclaimer .l2 {
       color: #555;
-      font-size: 12px;
+      font-size: clamp(10px, 2.86vw, 12px);
       line-height: 1.7;
       padding: 0 8px;
     }
@@ -186,8 +187,8 @@
       max-width: 420px;
       display: flex;
       background: var(--nav-bg);
-      padding: 12px 0;
-      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      padding: clamp(8px, 2.86vw, 12px) 0;
+      padding-bottom: max(clamp(8px, 2.86vw, 12px), env(safe-area-inset-bottom));
       border-top: 1px solid var(--divider);
     }
     .nav-item {
@@ -195,13 +196,13 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
-      font-size: 12px;
+      gap: clamp(4px, 1.43vw, 6px);
+      font-size: clamp(10px, 2.86vw, 12px);
       color: #666;
     }
     .nav-item.active { color: var(--gold); }
     .nav-icon {
-      font-size: 22px;
+      font-size: clamp(18px, 5.24vw, 22px);
       line-height: 1;
     }
     .nav-item.active .nav-icon {
@@ -225,7 +226,7 @@
       animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-text { font-size: 16px; color: var(--gray); }
+    .loading-text { font-size: clamp(13px, 3.8vw, 16px); color: var(--gray); }
   </style>
 </head>
 <body>
