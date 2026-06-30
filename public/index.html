@@ -338,6 +338,8 @@ const PRODUCTS = [
 // ==================== 状态 ====================
 const quotes = {};
 const prevPrice = {};
+const dayHigh = {};
+const dayLow = {};
 let firstLoad = true;
 
 // ==================== 数据获取（HTTP 轮询，3秒/次） ====================
@@ -352,7 +354,10 @@ async function fetchQuotes() {
     if (firstLoad) {
       for (const [code, d] of Object.entries(data)) {
         if (code === "USDCNY") continue;
-        quotes[code] = { name: d.name, bid: d.bid, trend: d.trend, high: d.high, low: d.low };
+        quotes[code] = { name: d.name, bid: d.bid, trend: d.trend };
+        // 日内高/低 初始化为首笔 bid
+        dayHigh[code] = d.bid;
+        dayLow[code]  = d.bid;
       }
       renderAll();
       firstLoad = false;
@@ -408,9 +413,10 @@ function updateQuote(code, data) {
     name: data.name,
     bid: data.bid,
     trend: data.trend,
-    high: data.high,
-    low: data.low,
   };
+  // 日内高低：跟踪 bid 的最大/最小值
+  if (data.bid > (dayHigh[code] ?? -Infinity)) dayHigh[code] = data.bid;
+  if (data.bid < (dayLow[code]  ??  Infinity)) dayLow[code]  = data.bid;
   prevPrice[code] = old;
   updateRow(code);
 }
@@ -434,13 +440,31 @@ function updateRow(code) {
     }
   }
 
-  // 最高
+  // 最高（日内回购价最大值）
   const highEl = document.getElementById("high-" + code);
-  if (highEl && q.high != null) highEl.textContent = q.high.toFixed(2);
+  if (highEl && dayHigh[code] != null) {
+    const oldHigh = highEl.textContent;
+    const newHigh = dayHigh[code].toFixed(2);
+    if (oldHigh !== newHigh) {
+      highEl.textContent = newHigh;
+      highEl.classList.remove("price-pop");
+      void highEl.offsetWidth;
+      highEl.classList.add("price-pop");
+    }
+  }
 
-  // 最低
+  // 最低（日内回购价最小值）
   const lowEl = document.getElementById("low-" + code);
-  if (lowEl && q.low != null) lowEl.textContent = q.low.toFixed(2);
+  if (lowEl && dayLow[code] != null) {
+    const oldLow = lowEl.textContent;
+    const newLow = dayLow[code].toFixed(2);
+    if (oldLow !== newLow) {
+      lowEl.textContent = newLow;
+      lowEl.classList.remove("price-pop");
+      void lowEl.offsetWidth;
+      lowEl.classList.add("price-pop");
+    }
+  }
 
   // 行闪烁
   const row = document.getElementById("row-" + code);
@@ -463,8 +487,8 @@ function renderAll() {
     <div class="tr" id="row-${p.code}">
       <div class="td td-name"><span>${p.name}</span></div>
       <div class="td td-buy"><span id="bid-${p.code}" style="color:${getBidColor(q.trend)}">${q.bid != null ? q.bid.toFixed(2) : "--.--"}</span></div>
-      <div class="td td-high"><span id="high-${p.code}">${q.high != null ? q.high.toFixed(2) : "--.--"}</span></div>
-      <div class="td td-low"><span id="low-${p.code}">${q.low != null ? q.low.toFixed(2) : "--.--"}</span></div>
+      <div class="td td-high"><span id="high-${p.code}">${dayHigh[p.code] != null ? dayHigh[p.code].toFixed(2) : "--.--"}</span></div>
+      <div class="td td-low"><span id="low-${p.code}">${dayLow[p.code] != null ? dayLow[p.code].toFixed(2) : "--.--"}</span></div>
     </div>`;
   }
 
