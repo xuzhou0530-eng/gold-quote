@@ -341,6 +341,13 @@ const prevPrice = {};
 const dayHigh = {};
 const dayLow = {};
 let firstLoad = true;
+let currentDayKey = "";
+
+// 交易日：6:00 ~ 次日 5:00。用 当前时间-6h 的日期作为 key
+function getDayKey() {
+  const t = new Date(Date.now() - 6 * 3600 * 1000);
+  return `${t.getFullYear()}-${t.getMonth() + 1}-${t.getDate()}`;
+}
 
 // ==================== 数据获取（HTTP 轮询，3秒/次） ====================
 async function fetchQuotes() {
@@ -348,6 +355,14 @@ async function fetchQuotes() {
     const resp = await fetch("/api/quote");
     const data = await resp.json();
     if (!data || data.error) return;
+
+    // 交易日切换（6:00 为新一天起点），重置日内高低
+    const dk = getDayKey();
+    if (dk !== currentDayKey) {
+      for (const k of Object.keys(dayHigh)) delete dayHigh[k];
+      for (const k of Object.keys(dayLow))  delete dayLow[k];
+      currentDayKey = dk;
+    }
 
     document.getElementById("loading")?.remove();
 
