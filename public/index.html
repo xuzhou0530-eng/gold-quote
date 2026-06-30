@@ -386,6 +386,8 @@ function updateTimestamp() {
   if (st) {
     st.textContent = inMarket ? "实时" : "闭盘";
     st.style.color = inMarket ? "var(--green)" : "var(--ts-red)";
+    const tsText = document.getElementById("tsText");
+    if (tsText) tsText.style.color = inMarket ? "var(--green)" : "var(--ts-red)";
       const dot = document.getElementById("tsDot");
       if (dot) dot.className = "ts-dot " + (inMarket ? "live" : "closed");
   }
