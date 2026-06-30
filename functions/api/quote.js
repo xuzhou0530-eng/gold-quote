@@ -68,13 +68,17 @@ export async function onRequest(context) {
       const high = sf(4) * c;
       const low  = sf(5) * c;
 
+      // trend: 基于原始数据(floor前)比较最新价 vs 今开
+      const trend = bid > open ? 1 : (bid < open ? -1 : 0);
+
       const off = OFFSETS[key] || {};
       result[key] = {
         name: prod.name,
-        bid:  Math.floor(bid  + (off.bid  || 0)),
-        open: Math.floor(open + (off.bid  || 0)),
-        high: Math.floor(high + (off.high || 0)),
-        low:  Math.floor(low  + (off.low  || 0)),
+        bid:   Math.floor(bid  + (off.bid  || 0)),
+        open:  Math.floor(open + (off.bid  || 0)),
+        trend: trend,
+        high:  Math.floor(high + (off.high || 0)),
+        low:   Math.floor(low  + (off.low  || 0)),
       };
     }
 

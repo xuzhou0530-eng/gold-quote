@@ -92,12 +92,15 @@ def parse_intl(fields, rate):
     ask   = sf(fields[8]) * c
     high  = sf(fields[4]) * c
     low   = sf(fields[5]) * c
+    # trend: 基于原始数据(floor前)比较最新价 vs 今开
+    trend = 1 if bid > open_ else (-1 if bid < open_ else 0)
     chg = f"{(price - prev) / prev * 100:+.2f}%" if prev > 0 else ""
     return {
         "price": round(price, 2), "bid": round(bid or price, 2),
         "open": round(open_, 2),
         "ask": round(ask or price, 2), "high": round(high, 2),
         "low": round(low, 2), "change_pct": chg,
+        "trend": trend,
         "time": fields[6] if len(fields) > 6 else "",
     }
 
