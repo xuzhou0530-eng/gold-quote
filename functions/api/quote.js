@@ -62,8 +62,9 @@ export async function onRequest(context) {
 
       const sf = (i) => { const v = parseFloat(f[i]); return isNaN(v) ? 0 : v; };
 
-      // fields[0]=最新价  fields[4]=最高  fields[5]=最低
+      // fields[0]=最新价  fields[2]=今开  fields[4]=最高  fields[5]=最低
       const bid  = sf(0) * c;
+      const open = sf(2) * c;
       const high = sf(4) * c;
       const low  = sf(5) * c;
 
@@ -71,6 +72,7 @@ export async function onRequest(context) {
       result[key] = {
         name: prod.name,
         bid:  Math.floor(bid  + (off.bid  || 0)),
+        open: Math.floor(open + (off.bid  || 0)),
         high: Math.floor(high + (off.high || 0)),
         low:  Math.floor(low  + (off.low  || 0)),
       };

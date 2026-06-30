@@ -87,6 +87,7 @@ def parse_intl(fields, rate):
     c = rate / OZ_TO_GRAM
     price = sf(fields[0]) * c
     prev  = sf(fields[1]) * c
+    open_ = sf(fields[2]) * c
     bid   = sf(fields[0]) * c
     ask   = sf(fields[8]) * c
     high  = sf(fields[4]) * c
@@ -94,6 +95,7 @@ def parse_intl(fields, rate):
     chg = f"{(price - prev) / prev * 100:+.2f}%" if prev > 0 else ""
     return {
         "price": round(price, 2), "bid": round(bid or price, 2),
+        "open": round(open_, 2),
         "ask": round(ask or price, 2), "high": round(high, 2),
         "low": round(low, 2), "change_pct": chg,
         "time": fields[6] if len(fields) > 6 else "",
@@ -145,7 +147,7 @@ async def poll_loop():
                         d["name"] = prod["name"]
                         # 应用价格偏移 + 向下取整到0.5
                         off = OFFSETS.get(key, {})
-                        for col in ("bid", "high", "low"):
+                        for col in ("bid", "open", "high", "low"):
                             v = d[col]
                             if col in off:
                                 v += off[col]

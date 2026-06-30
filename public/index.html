@@ -159,11 +159,10 @@
       color: var(--gold);
     }
 
-    /* 回购价 */
+    /* 回购价 —— 颜色由 JS 动态设置（涨红/跌绿/平灰） */
     .td-buy span {
       font-size: clamp(16px, 5.24vw, 22px);
       font-weight: 700;
-      color: var(--green);
     }
 
     /* 最高价 */
@@ -353,7 +352,7 @@ async function fetchQuotes() {
     if (firstLoad) {
       for (const [code, d] of Object.entries(data)) {
         if (code === "USDCNY") continue;
-        quotes[code] = { name: d.name, bid: d.bid, high: d.high, low: d.low };
+        quotes[code] = { name: d.name, bid: d.bid, open: d.open, high: d.high, low: d.low };
       }
       renderAll();
       firstLoad = false;
@@ -393,12 +392,20 @@ function updateTimestamp() {
 }
 
 // ==================== 数据处理 ====================
+function getBidColor(bid, open) {
+  if (open == null || bid == null) return "var(--text-dim)";
+  if (bid > open) return "var(--red)";
+  if (bid < open) return "var(--green)";
+  return "var(--text-dim)";
+}
+
 function updateQuote(code, data) {
   if (!code || !data || code === "USDCNY") return;
   const old = quotes[code] ? quotes[code].bid : null;
   quotes[code] = {
     name: data.name,
     bid: data.bid,
+    open: data.open,
     high: data.high,
     low: data.low,
   };
@@ -416,6 +423,8 @@ function updateRow(code) {
   const bidEl = document.getElementById("bid-" + code);
   if (bidEl && q.bid != null) {
     bidEl.textContent = q.bid.toFixed(2);
+    // 颜色：bid > open 红（涨）= open 灰（平）< open 绿（跌）
+    bidEl.style.color = getBidColor(q.bid, q.open);
     if (prev != null && q.bid !== prev) {
       bidEl.classList.remove("price-pop");
       void bidEl.offsetWidth;
@@ -451,7 +460,7 @@ function renderAll() {
     html += `
     <div class="tr" id="row-${p.code}">
       <div class="td td-name"><span>${p.name}</span></div>
-      <div class="td td-buy"><span id="bid-${p.code}">${q.bid != null ? q.bid.toFixed(2) : "--.--"}</span></div>
+      <div class="td td-buy"><span id="bid-${p.code}" style="color:${getBidColor(q.bid, q.open)}">${q.bid != null ? q.bid.toFixed(2) : "--.--"}</span></div>
       <div class="td td-high"><span id="high-${p.code}">${q.high != null ? q.high.toFixed(2) : "--.--"}</span></div>
       <div class="td td-low"><span id="low-${p.code}">${q.low != null ? q.low.toFixed(2) : "--.--"}</span></div>
     </div>`;
