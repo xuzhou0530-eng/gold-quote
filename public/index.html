@@ -338,16 +338,7 @@ const PRODUCTS = [
 // ==================== 状态 ====================
 const quotes = {};
 const prevPrice = {};
-const dayHigh = {};
-const dayLow = {};
 let firstLoad = true;
-let currentDayKey = "";
-
-// 交易日：6:00 ~ 次日 5:00。用 当前时间-6h 的日期作为 key
-function getDayKey() {
-  const t = new Date(Date.now() - 6 * 3600 * 1000);
-  return `${t.getFullYear()}-${t.getMonth() + 1}-${t.getDate()}`;
-}
 
 // ==================== 数据获取（HTTP 轮询，3秒/次） ====================
 async function fetchQuotes() {
@@ -356,23 +347,12 @@ async function fetchQuotes() {
     const data = await resp.json();
     if (!data || data.error) return;
 
-    // 交易日切换（6:00 为新一天起点），重置日内高低
-    const dk = getDayKey();
-    if (dk !== currentDayKey) {
-      for (const k of Object.keys(dayHigh)) delete dayHigh[k];
-      for (const k of Object.keys(dayLow))  delete dayLow[k];
-      currentDayKey = dk;
-    }
-
     document.getElementById("loading")?.remove();
 
     if (firstLoad) {
       for (const [code, d] of Object.entries(data)) {
         if (code === "USDCNY") continue;
-        quotes[code] = { name: d.name, bid: d.bid, trend: d.trend };
-        // 日内高/低 初始化为首笔 bid
-        dayHigh[code] = d.bid;
-        dayLow[code]  = d.bid;
+        quotes[code] = { name: d.name, bid: d.bid, trend: d.trend, high: d.high, low: d.low };
       }
       renderAll();
       firstLoad = false;
@@ -428,10 +408,9 @@ function updateQuote(code, data) {
     name: data.name,
     bid: data.bid,
     trend: data.trend,
+    high: data.high,
+    low: data.low,
   };
-  // 日内高低：跟踪 bid 的最大/最小值
-  if (data.bid > (dayHigh[code] ?? -Infinity)) dayHigh[code] = data.bid;
-  if (data.bid < (dayLow[code]  ??  Infinity)) dayLow[code]  = data.bid;
   prevPrice[code] = old;
   updateRow(code);
 }
@@ -455,11 +434,11 @@ function updateRow(code) {
     }
   }
 
-  // 最高（日内回购价最大值）
+  // 最高（API 返回的全天最高回购价）
   const highEl = document.getElementById("high-" + code);
-  if (highEl && dayHigh[code] != null) {
+  if (highEl && q.high != null) {
     const oldHigh = highEl.textContent;
-    const newHigh = dayHigh[code].toFixed(2);
+    const newHigh = q.high.toFixed(2);
     if (oldHigh !== newHigh) {
       highEl.textContent = newHigh;
       highEl.classList.remove("price-pop");
@@ -468,11 +447,11 @@ function updateRow(code) {
     }
   }
 
-  // 最低（日内回购价最小值）
+  // 最低（API 返回的全天最低回购价）
   const lowEl = document.getElementById("low-" + code);
-  if (lowEl && dayLow[code] != null) {
+  if (lowEl && q.low != null) {
     const oldLow = lowEl.textContent;
-    const newLow = dayLow[code].toFixed(2);
+    const newLow = q.low.toFixed(2);
     if (oldLow !== newLow) {
       lowEl.textContent = newLow;
       lowEl.classList.remove("price-pop");
@@ -502,8 +481,8 @@ function renderAll() {
     <div class="tr" id="row-${p.code}">
       <div class="td td-name"><span>${p.name}</span></div>
       <div class="td td-buy"><span id="bid-${p.code}" style="color:${getBidColor(q.trend)}">${q.bid != null ? q.bid.toFixed(2) : "--.--"}</span></div>
-      <div class="td td-high"><span id="high-${p.code}">${dayHigh[p.code] != null ? dayHigh[p.code].toFixed(2) : "--.--"}</span></div>
-      <div class="td td-low"><span id="low-${p.code}">${dayLow[p.code] != null ? dayLow[p.code].toFixed(2) : "--.--"}</span></div>
+      <div class="td td-high"><span id="high-${p.code}">${q.high != null ? q.high.toFixed(2) : "--.--"}</span></div>
+      <div class="td td-low"><span id="low-${p.code}">${q.low != null ? q.low.toFixed(2) : "--.--"}</span></div>
     </div>`;
   }
 
