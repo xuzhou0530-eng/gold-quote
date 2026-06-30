@@ -23,7 +23,7 @@ except ImportError:
 
 # ============ 配置 ============
 HTTP_PORT = 3456
-POLL_INTERVAL = 3  # 新浪轮询间隔（秒）
+POLL_INTERVAL = 1  # 新浪轮询间隔（秒）
 PUBLIC_DIR = Path(__file__).parent / "public"
 OZ_TO_GRAM = 31.1035  # 1金衡盎司 = 31.1035克
 
