@@ -41,7 +41,7 @@ ALL_SINA_CODES = [p["sina"] for p in PRODUCTS.values()] + ["USDCNY"]
 
 # ============ 价格偏移（显示值 = 原始值 + 偏移） ============
 OFFSETS = {
-    "XAU": {"bid": -30, "high": -30, "low": -30},
+    "XAU": {"bid": -20, "high": -20, "low": -20},
     "XAG": {"bid":  -3, "high":  -3, "low":  -3},
     "XPT": {"bid": -75, "high": -75, "low": -75},
     "XPD": {"bid": -90, "high": -90, "low": -90},
