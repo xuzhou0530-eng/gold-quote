@@ -1,0 +1,16 @@
+name: Capture 6:00 AM Open Price
+
+on:
+  schedule:
+    # UTC 22:00 = 北京时间次日 6:00
+    - cron: "0 22 * * *"
+  # 也允许手动触发（测试用）
+  workflow_dispatch:
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping API to capture 6:00 AM open price
+        run: |
+          curl -s -o /dev/null -w "HTTP %{http_code}\n" https://gold-quote.pages.dev/api/quote
