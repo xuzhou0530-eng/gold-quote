@@ -59,8 +59,8 @@ export async function onRequest(context) {
     const dateKey = `${bj.getUTCFullYear()}-${bj.getUTCMonth()+1}-${bj.getUTCDate()}`;
     const hour = bj.getUTCHours();
 
-    // 铂金/钯金：尝试从缓存中取今天的6:00参考价
-    const openCacheUrl = new URL(`/__open/${dateKey}`, request.url);
+    // 铂金/钯金：尝试从缓存中取今天的6:00参考价（v2 清除旧时区bug脏缓存）
+    const openCacheUrl = new URL(`/__open/v2/${dateKey}`, request.url);
     let openResp = await cache.match(openCacheUrl);
     let storedOpen = null;
     if (openResp) {
