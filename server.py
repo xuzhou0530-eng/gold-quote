@@ -55,6 +55,7 @@ OFFSETS = {
 quotes = {}
 usdcny = 6.78
 ws_clients = set()
+custom_open = {}  # 铂金/钯金自定义今开: {"XPT": {"date":"2026-07-01","price":950.5}, ...}
 
 # ============ 工具 ============
 def sf(val, default=0.0):
@@ -83,18 +84,21 @@ async def fetch_sina(session):
                 result[code] = data.split(",")
     return result
 
-def parse_intl(fields, rate):
-    """国际品种: 美元/盎司 → 人民币/克"""
+def parse_intl(fields, rate, custom_ref=None):
+    """国际品种: 美元/盎司 → 人民币/克. custom_ref: 铂金/钯金自定义今开(美元/盎司)"""
     c = rate / OZ_TO_GRAM
     price = sf(fields[0]) * c
     prev  = sf(fields[1]) * c
-    # 昨收优先(现货有效)，昨收为空则用今开(期货)
-    ref   = (sf(fields[1]) or sf(fields[2])) * c
     bid   = sf(fields[0]) * c
     ask   = sf(fields[8]) * c
     high  = sf(fields[4]) * c
     low   = sf(fields[5]) * c
-    # trend: 基于原始数据(floor前)比较最新价 vs 昨收/今开
+    # 参考价: 自定义今开 > 昨收(现货) > 今开(期货)
+    if custom_ref is not None and custom_ref > 0:
+        ref = custom_ref * c
+    else:
+        ref = (sf(fields[1]) or sf(fields[2])) * c
+    # trend: 基于原始数据(floor前)比较最新价 vs 参考价
     trend = 1 if bid > ref else (-1 if bid < ref else 0)
     chg = f"{(price - prev) / prev * 100:+.2f}%" if prev > 0 else ""
     return {
@@ -145,10 +149,22 @@ async def poll_loop():
                 new_q = {}
 
                 # 国际品种
+                now = time.localtime()
+                today_key = f"{now.tm_year}-{now.tm_mon}-{now.tm_mday}"
                 for key, prod in PRODUCTS.items():
                     f = raw.get(prod["sina"])
                     if f and len(f) >= 10:
-                        d = parse_intl(f, rate)
+                        # 铂金/钯金: 以当天6:00价格为今开
+                        custom_ref = None
+                        if key in ("XPT", "XPD"):
+                            if now.tm_hour >= 6:
+                                if key not in custom_open or custom_open[key].get("date") != today_key:
+                                    custom_open[key] = {"date": today_key, "price": sf(f[0])}
+                                custom_ref = custom_open[key]["price"]
+                            else:
+                                # 6:00前用新浪今开兜底
+                                custom_ref = sf(f[2])
+                        d = parse_intl(f, rate, custom_ref)
                         d["name"] = prod["name"]
                         # 应用价格偏移 + 向下取整到0.5
                         off = OFFSETS.get(key, {})

@@ -19,7 +19,7 @@ const OFFSETS = {
 export async function onRequest(context) {
   const { request } = context;
 
-  // 缓存：3秒内相同请求直接返回缓存
+  // 缓存：1秒内相同请求直接返回缓存
   const cache = caches.default;
   let response = await cache.match(request);
   if (response) return response;
@@ -53,8 +53,21 @@ export async function onRequest(context) {
       if (r > 0) rate = r;
     }
 
+    const now = new Date();
+    const dateKey = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+    const hour = now.getHours();
+
+    // 铂金/钯金：尝试从缓存中取今天的6:00参考价
+    const openCacheUrl = new URL(`/__open/${dateKey}`, request.url);
+    let openResp = await cache.match(openCacheUrl);
+    let storedOpen = null;
+    if (openResp) {
+      try { storedOpen = await openResp.json(); } catch(e) {}
+    }
+
     const c = rate / OZ_TO_GRAM;
     const result = {};
+    let needStoreOpen = false;
 
     for (const [key, prod] of Object.entries(PRODUCTS)) {
       const f = raw[prod.sina];
@@ -62,13 +75,32 @@ export async function onRequest(context) {
 
       const sf = (i) => { const v = parseFloat(f[i]); return isNaN(v) ? 0 : v; };
 
-      // fields[0]=最新价 fields[1]=昨收 fields[2]=今开(现货不可靠) fields[4]=最高 fields[5]=最低
       const bid  = sf(0) * c;
-      const ref  = (sf(1) || sf(2)) * c; // 昨收优先(现货有效)，为空则今开(期货)
       const high = sf(4) * c;
       const low  = sf(5) * c;
 
-      // trend: 基于原始数据(floor前)比较最新价 vs 昨收/今开
+      // 参考价
+      let ref;
+      if (key === "XAU" || key === "XAG") {
+        // 现货：昨收优先(昨收有效)
+        ref  = (sf(1) || sf(2)) * c;
+      } else {
+        // 铂金/钯金：以当天6:00价格为今开
+        if (hour >= 6) {
+          if (!storedOpen || storedOpen[key] == null) {
+            // 6:00后首次请求，截取当前原始价格(美元)作为今开
+            if (!storedOpen) storedOpen = {};
+            storedOpen[key] = sf(0);
+            needStoreOpen = true;
+          }
+          ref = storedOpen[key] * c;
+        } else {
+          // 6:00前用新浪今开兜底
+          ref = sf(2) * c;
+        }
+      }
+
+      // trend: 基于原始数据(floor前)比较最新价 vs 参考价
       const trend = bid > ref ? 1 : (bid < ref ? -1 : 0);
 
       const off = OFFSETS[key] || {};
@@ -82,6 +114,18 @@ export async function onRequest(context) {
       };
     }
 
+    // 存储自定义今开到缓存（持久化到次日5:00）
+    if (needStoreOpen && storedOpen) {
+      const next5am = new Date(now);
+      next5am.setDate(next5am.getDate() + 1);
+      next5am.setHours(5, 0, 0, 0);
+      const maxAge = Math.max(60, Math.floor((next5am - now) / 1000));
+      const storeResp = new Response(JSON.stringify(storedOpen), {
+        headers: { "Cache-Control": `public, max-age=${maxAge}` }
+      });
+      context.waitUntil(cache.put(openCacheUrl, storeResp));
+    }
+
     response = new Response(JSON.stringify(result), {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
@@ -90,7 +134,7 @@ export async function onRequest(context) {
       },
     });
 
-    // 缓存 3 秒，多人访问也只消耗 1 次 Sina 请求
+    // 缓存 1 秒，多人访问也只消耗 1 次 Sina 请求
     context.waitUntil(cache.put(request, response.clone()));
     return response;
 
