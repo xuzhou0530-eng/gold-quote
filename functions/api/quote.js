@@ -53,9 +53,11 @@ export async function onRequest(context) {
       if (r > 0) rate = r;
     }
 
+    // 北京时间 (UTC+8) —— Cloudflare 服务器默认使用 UTC
     const now = new Date();
-    const dateKey = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
-    const hour = now.getHours();
+    const bj = new Date(now.getTime() + 8 * 3600 * 1000);
+    const dateKey = `${bj.getUTCFullYear()}-${bj.getUTCMonth()+1}-${bj.getUTCDate()}`;
+    const hour = bj.getUTCHours();
 
     // 铂金/钯金：尝试从缓存中取今天的6:00参考价
     const openCacheUrl = new URL(`/__open/${dateKey}`, request.url);
@@ -85,7 +87,7 @@ export async function onRequest(context) {
         // 现货：昨收优先(昨收有效)
         ref  = (sf(1) || sf(2)) * c;
       } else {
-        // 铂金/钯金：以当天6:00价格为今开
+        // 铂金/钯金：以北京时间6:00价格为今开
         if (hour >= 6) {
           if (!storedOpen || storedOpen[key] == null) {
             // 6:00后首次请求，截取当前原始价格(美元)作为今开
@@ -114,12 +116,11 @@ export async function onRequest(context) {
       };
     }
 
-    // 存储自定义今开到缓存（持久化到次日5:00）
+    // 存储自定义今开到缓存（持久化到次日北京时间5:00 = 当日UTC 21:00）
     if (needStoreOpen && storedOpen) {
-      const next5am = new Date(now);
-      next5am.setDate(next5am.getDate() + 1);
-      next5am.setHours(5, 0, 0, 0);
-      const maxAge = Math.max(60, Math.floor((next5am - now) / 1000));
+      // 次日5:00 BJ = 当日21:00 UTC
+      const next5amBJ = new Date(Date.UTC(bj.getUTCFullYear(), bj.getUTCMonth(), bj.getUTCDate(), 21, 0, 0));
+      const maxAge = Math.max(60, Math.floor((next5amBJ.getTime() - now.getTime()) / 1000));
       const storeResp = new Response(JSON.stringify(storedOpen), {
         headers: { "Cache-Control": `public, max-age=${maxAge}` }
       });
